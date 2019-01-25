@@ -1,1 +1,5 @@
 example_output/
+private.md
+.nextflow*
+work/
+nextflow_reports/

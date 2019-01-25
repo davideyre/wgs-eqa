@@ -63,6 +63,24 @@ optional arguments:
                         distributed)
 ```
 
+Having run the python script to simulate a new reference, wgsim can be used to simulate read data. wgsim can be downloaded and compiled from source:
+```
+git clone https://github.com/lh3/wgsim.git
+cd wgsim
+gcc -g -O2 -Wall -o wgsim wgsim.c -lz -lm
+```
+
+Or installed via bioconda:
+
+```
+conda config --add channels bioconda
+conda install wgsim
+```
+
+
+An example of this approach, as a NextFlow workflow can be found in simulate.nf. 
+
+An alternative approach is to map actual sequence reads from sequencing the original reference back to the simulated reference with variants.
 
 
 David Eyre
