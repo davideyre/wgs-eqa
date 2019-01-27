@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 ## generate a simulated reference sequence with mutations, recombination and indels
 ## David Eyre, david.eyre@bdi.ox.ac.uk
 ## 25 January 2019
@@ -16,10 +15,18 @@ import sys
 import numpy as np
 import argparse
 import uuid
+import json
 
 
-def simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_mean, prop_of_sites_diff_in_recomb, deletion_n, deletion_length_mean, insertion_n, insertion_length_mean):
-
+def simulate_ref (ref_file, output_path, mutation_n, subs_from_recomb, recomb_length_mean, prop_of_sites_diff_in_recomb, deletion_n, deletion_length_mean, insertion_n, insertion_length_mean):
+	
+	#set up output files
+	id = str(uuid.uuid4())[0:8]
+	output = '%s/SR_%s'%(output_path, id) #add prefix to files of SR for simulated reference and then 8 digit random id
+	output_list_file = '%s.txt'%output #list of variants simulated
+	json_file = '%s.json'%output #json file with metadata
+	out_fa = '%s.fa'%output #fasta file for new reference
+	
 	#get the expected number of recombination events
 	recomb_events = round(subs_from_recomb / (prop_of_sites_diff_in_recomb * recomb_length_mean))
 	
@@ -46,10 +53,11 @@ def simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_
 	#events
 	event_per_site = mutation_per_site + recomb_events_per_site + deletion_events_per_site + insertion_events_per_site
 	event_list = ['mutation', 'recomb', 'deletion', 'insertion']
-	event_list_p = [e/event_per_site for e in [mutation_per_site, recomb_events_per_site, deletion_events_per_site, insertion_events_per_site]]
+	event_list_p = [e/event_per_site for e in [mutation_per_site, recomb_events_per_site, 
+												deletion_events_per_site, insertion_events_per_site]]
 	
 	#output new_ref
-	new_ref = []
+	new_ref = [] #list of new chromosome SeqRecord objects
 	mutation_counter = 0
 	recomb_counter = 0
 	recomb_subs = 0
@@ -57,13 +65,12 @@ def simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_
 	del_bases = 0
 	insert_counter = 0
 	insert_bases = 0
+	chr_list = [] #list of chromosome names
+	var_list = [] #list of variants
 	
-	#ouput list of variants
-	output_list_file = '%s.txt'%output
-	o = open(output_list_file, 'w')
-	o.write('variant_type\tchromosome\tsite\tnew_site\toriginal\tnew\n')
 	
 	for chr in ref:
+		chr_list.append({'id': chr.id, 'name': chr.name, 'description': chr.description})
 		#for each chromosome / plasmid in reference
 		seq_data = [b for b in chr.seq]
 		chr_len = len(chr)
@@ -84,10 +91,13 @@ def simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_
 				
 				#simulate the new base
 				new_base = np.random.choice(bases, 1, p=bases_p)[0]
-				o.write('mutation\t%s\t%s\t%s\t%s\t%s\n'%(chr.id, site, site+site_offset, seq_data[site], new_base))			
+				#store mutation
+				var_list.append({'chromosome': chr.id, 'site': site, 'new_site': site+site_offset, 
+											'type': 'mutation',
+											'original': seq_data[site], 
+											'variant': new_base})
 				#add mutation to new reference
 				seq_data[site] = new_base
-				
 			
 			elif event_type == "deletion":
 				#a deletion event has occurred
@@ -102,7 +112,11 @@ def simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_
 					end = site+del_len
 				#set deletion
 				for b in range(site, end):
-					o.write('deletition\t%s\t%s\t%s\t%s\t-\n'%(chr.id, b, b+site_offset, seq_data[b]))
+					#store deletion
+					var_list.append({'chromosome': chr.id, 'site': b, 'new_site': b+site_offset, 
+							'type': 'deletion',
+							'original': seq_data[b], 
+							'variant': '-'})
 					site_offset -= 1	
 					seq_data[b] = '-'
 				del_bases += end-site
@@ -112,7 +126,10 @@ def simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_
 				insert_len = np.random.geometric(1/insertion_length_mean)
 				insert = "".join(np.random.choice(bases, insert_len, p=bases_p))
 				insert_list.append((site+insert_bases_chr, insert))
-				o.write('insertion\t%s\t%s\t%s\t%s\t%s\n'%(chr.id, site, site+site_offset, seq_data[site], seq_data[site] + insert))
+				var_list.append({'chromosome': chr.id, 'site': site, 'new_site': site+site_offset, 
+							'type': 'insertiion', 
+							'original': seq_data[site], 
+							'variant': seq_data[site] + insert})
 				insert_counter += 1
 
 				insert_bases_chr += insert_len
@@ -135,16 +152,17 @@ def simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_
 				for b in range(site, end):
 					if np.random.random() < prop_of_sites_diff_in_recomb:
 						new_base = np.random.choice(bases, 1, p=bases_p)[0]
-						o.write('recombination\t%s\t%s\t%s\t%s\t%s\n'%(chr.id, b, b+site_offset, seq_data[b], new_base))	
+						var_list.append({'chromosome': chr.id, 'site': b, 'new_site': b+site_offset,
+							'type': 'recombination',
+							'original': seq_data[b], 
+							'variant': new_base})
 						seq_data[b] = new_base
 						recomb_subs += 1
 			
 			#simulate number of sites to next event
 			site = site + np.random.geometric(event_per_site)
 		
-		#once complete write the seq_data back
-		
-		#insert insertions - the insertion follows the base identified by siite
+		#insert insertions - the insertion follows the base identified by site
 		insert_bases += insert_bases_chr #keep track of the overall number of inserted bases
 		last_i = 0
 		seq_data_i = []
@@ -155,9 +173,9 @@ def simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_
 			else:
 				seq_data_i += seq_data[last_i+1:i[0]+1] + insert_seq
 			last_i = i[0]
-		
 		seq_data_i += seq_data[last_i+1:]
 		
+		#write the new SeqRecord object for this chromosome
 		seq_data_joined = "".join([b for b in seq_data_i if b!="-"])
 		desc_str = "| m=%s sr=%s rl=%s p=%0.3f d=%s dl=%s i=%s il=%s"%(
 							mutation_n, subs_from_recomb, recomb_length_mean, prop_of_sites_diff_in_recomb,
@@ -167,19 +185,36 @@ def simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_
 		new_ref.append(seq_record)
 	
 	#write the mutated reference file
-	out_fa = '%s.fa'%output
 	SeqIO.write(new_ref, out_fa, 'fasta')
 	new_ref_len = sum(len(chr) for chr in new_ref)
-	o.close()
+	
+	#ouput list of variants
+	with open(output_list_file, 'w') as o:
+		o.write('chromosome\tsite\tnew_site\tvariant_type\toriginal\tnew\n')
+		for v in var_list:
+			o.write('%s\t%s\t%s\t%s\t%s\t%s\n'%(v['chromosome'], v['site'], v['new_site'], 
+												v['type'], v['original'], v['variant']))
+	
+	#write json file
+	parms = {'mutation_n': mutation_n, 'subs_from_recomb': subs_from_recomb, 'recomb_length_mean': recomb_length_mean, 
+				'prop_of_sites_diff_in_recomb': prop_of_sites_diff_in_recomb, 'deletion_n': deletion_n, 
+				'deletion_length_mean': deletion_length_mean, 'insertion_n': insertion_n, 
+				'insertion_length_mean': insertion_length_mean}
+	meta = {'id': id, 'parms': parms, 'ref_file_name': ref_file, 'chromosomes': chr_list, 'variants': var_list}
+	with open(json_file, "w") as o:
+		json.dump(meta, o, indent=4)
 	
 	#report number of events of each type
 	sys.stdout.write('\nSimulated reference written to %s\n'%out_fa)
 	sys.stdout.write('List of variants written to %s\n'%output_list_file)
+	sys.stdout.write('JSON file of metadata written to %s\n'%json_file)
 	sys.stdout.write('There are %s mutations\n'%mutation_counter)
 	sys.stdout.write('There are %s recombinations resulting in %s substitutions\n'%(recomb_counter, recomb_subs))
 	sys.stdout.write('There are %s deletions involving a total of %s bases\n'%(del_counter, del_bases))
 	sys.stdout.write('There are %s insertions involving a total of %s bases\n'%(insert_counter, insert_bases))
 	sys.stdout.write('Original length: %s\tNew length %s\t Difference %s\n'%(ref_len, new_ref_len, new_ref_len-ref_len))
+	
+	#done
 	sys.stdout.write('Done.\n\n')
 
 if __name__ == '__main__':
@@ -188,7 +223,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Simulate a new reference from an existiing reference with mutation, recombination, indels')
 
 	parser.add_argument('-r', '--refile', dest='ref_file', action='store', help='path to existing reference file', required=True)
-	parser.add_argument('-o', '--output', dest='output', action='store', help='path stem for new reference file', required=True)
+	parser.add_argument('-o', '--output_path', dest='output_path', action='store', help='folder for new reference file', required=True)
 	
 	parser.add_argument('-m', '--mutation_n', dest='mutation_n', action='store', type=int, default=500,
 						help='expected number of mutation events (including same base to same base)')
@@ -208,19 +243,11 @@ if __name__ == '__main__':
 						help='mean length of insertion event (geometrically distributed)')
 	args = parser.parse_args()
 	
-	ref_file = args.ref_file
-	output = '%s_%s'%(args.output, str(uuid.uuid4())[0:8])
-	mutation_n = args.mutation_n
-	subs_from_recomb = args.subs_from_recomb
-	recomb_length_mean = args.recomb_length_mean
-	prop_of_sites_diff_in_recomb = args.prop_of_sites_diff_in_recomb
-	deletion_n = args.deletion_n
-	deletion_length_mean = args.deletion_length_mean
-	insertion_n = args.insertion_n
-	insertion_length_mean = args.insertion_length_mean
 	
 	#run the simulation
-	simulate_ref (ref_file, output, mutation_n, subs_from_recomb, recomb_length_mean, prop_of_sites_diff_in_recomb, deletion_n, deletion_length_mean, insertion_n, insertion_length_mean)
+	simulate_ref (args.ref_file, args.output_path, args.mutation_n, args.subs_from_recomb,
+					 args.recomb_length_mean, args.prop_of_sites_diff_in_recomb, args.deletion_n,
+					 args.deletion_length_mean, args.insertion_n, args.insertion_length_mean)
 	
 	#example call
-	#./simulate_reference.py -r ref/R00000003.fasta -o example_output/R00000003 -m 500 -s 300 -l 1000 -p 0.04 -d 100 -e 1.5 -i 100 -n 1.5
+	#bin/simulate_reference.py -r ref/test.fa -o example_output -m 500 -s 300 -l 1000 -p 0.04 -d 100 -e 1.5 -i 100 -n 1.5
