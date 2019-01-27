@@ -21,7 +21,7 @@ Channel
     .from( [500, 0, 0, 0], [500, 500, 0, 0], [500, 500, 200, 200], [2500, 2500, 500, 500], [25000, 25000, 1000, 1000] )
     .set { simSettings }
 
-iterations = [1, 2]
+iterations = 10
 
 // make simulated references
 process indexReference {
@@ -30,7 +30,7 @@ process indexReference {
         file refFasta
         file outputPath
         set (m, s, d, i) from simSettings
-        each iter from iterations
+        each iter from 1..iterations
 	
 	output:
 		file "*"
@@ -67,8 +67,10 @@ process simReads {
 	// -1 150 -2 150 150bp reads
 	// -r 0 -R 0 don't simulate more mutations or indels
 	// - S random seed = 1
+	
+	//prefix output files with r for rSR - reads from Simulated Reference
 	"""
-	wgsim -N 1433333 -e 0.001 -1 150 -2 150 -r 0 -R 0 -S 1  ${fasta} ${fasta.baseName}.1.fq ${fasta.baseName}.2.fq
+	wgsim -N 1433333 -e 0.001 -1 150 -2 150 -r 0 -R 0 -S 1  ${fasta} r${fasta.baseName}.1.fq r${fasta.baseName}.2.fq
 	gzip *.fq
 	"""
 	

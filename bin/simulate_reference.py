@@ -250,4 +250,4 @@ if __name__ == '__main__':
 					 args.deletion_length_mean, args.insertion_n, args.insertion_length_mean)
 	
 	#example call
-	#bin/simulate_reference.py -r ref/test.fa -o example_output -m 500 -s 300 -l 1000 -p 0.04 -d 100 -e 1.5 -i 100 -n 1.5
+	#bin/simulate_reference.py -r ref/R00000003.fa -o example_output -m 500 -s 300 -l 1000 -p 0.04 -d 100 -e 1.5 -i 100 -n 1.5
