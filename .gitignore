@@ -3,3 +3,4 @@ private.md
 .nextflow*
 work/
 nextflow_reports/
+bin/wgsim

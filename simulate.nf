@@ -44,7 +44,7 @@ process indexReference {
 	// -l 500 -p 0.05  -e 1.5 -n 1.5
     """
     simulate_reference.py -r $refFasta \
-    	-o ${refFasta.baseName}_${iter} \
+    	-o . \
     	-m $m -s $s -d $d -i $i \
     	-l 500 -p 0.05  -e 1.5 -n 1.5
     """
