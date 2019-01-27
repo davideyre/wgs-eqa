@@ -3,6 +3,7 @@
 // parameters 
 params.outputPath = "example_output"
 params.refFile = "ref/R00000003.fasta"
+params.iterations = 10
 
 // initial logging
 log.info "\n" 
@@ -14,14 +15,13 @@ log.info "\n"
 // rename input parameters
 refFasta = file(params.refFile)
 outputPath = file(params.outputPath)
-
+iterations = params.iterations
 
 // set up initial channel with sets of 4 values - mutations, substitutions from recombinations, deletions, insertions
 Channel
     .from( [500, 0, 0, 0], [500, 500, 0, 0], [500, 500, 200, 200], [2500, 2500, 500, 500], [25000, 25000, 1000, 1000] )
     .set { simSettings }
 
-iterations = 10
 
 // make simulated references
 process indexReference {
