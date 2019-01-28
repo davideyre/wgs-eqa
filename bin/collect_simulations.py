@@ -19,13 +19,14 @@ if __name__ == '__main__':
 	
 	#list all the files in the input director
 	dir_list = os.listdir(args.path)
+	abs_path = os.path.abspath(args.path)
 	
 	with open(args.out_file, 'w') as o:
 		o.write('sampleid,uuid,fq1,fq2\n')	
 		for f in dir_list:
 			if f.endswith(".fa"):
 				id = f.split('.')[0]
-				fq1 = 'r%s.1.fq.gz'%id
-				fq2 = 'r%s.2.fq.gz'%id
+				fq1 = '%s/r%s.1.fq.gz'%(abs_path, id)
+				fq2 = '%s/r%s.2.fq.gz'%(abs_path, id)
 				guid = str(uuid.uuid4())
 				o.write('%s,%s,%s,%s\n'%(id, guid, fq1, fq2))
