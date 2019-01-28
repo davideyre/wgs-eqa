@@ -27,6 +27,7 @@ Channel
 process simReference {
   
     input:
+        file refFasta
         set (m, s, d, i) from simSettings
         each iter from 1..iterations
 	
