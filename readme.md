@@ -83,6 +83,12 @@ Run the workflow, with appropriate settings, e.g.:
 nextflow run simulate.nf --outputPath ../pipeline-test/sim-ref --refFile ref/R00000003.fasta
 ```
 
+Following this you can use the script provided to generate a summary of the simulations and simulated reads for input into a WGS pipeline:
+
+```
+bin/collect_simulations.py -p ../pipeline-test/sim-ref/ -o ../pipeline-test/sim-list.csv
+```
+
 
 David Eyre
 david.eyre@bdi.ox.ac.ul
