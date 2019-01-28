@@ -24,7 +24,7 @@ Channel
 
 
 // make simulated references
-process indexReference {
+process simReference {
   
     input:
         file refFasta
