@@ -63,24 +63,25 @@ optional arguments:
                         distributed)
 ```
 
-Having run the python script to simulate a new reference, wgsim can be used to simulate read data. wgsim can be downloaded and compiled from source:
+### Docker implementation
+
+This will run the simulation for a given set of parameters, and then run wgsim to generate gzipped fq simualted read files.
+
+Requires a local installation of 
+* Docker - https://www.docker.com/get-started
+* Java version 8 or later (required for nextflow)
+* Nextflow - https://www.nextflow.io
+
+This can be pulled from docker hub
 ```
-git clone https://github.com/lh3/wgsim.git
-cd wgsim
-gcc -g -O2 -Wall -o wgsim wgsim.c -lz -lm
+docker pull davideyre/wgs-eqa
 ```
 
-Or installed via bioconda:
+Run the workflow, with appropriate settings, e.g.:
 
 ```
-conda config --add channels bioconda
-conda install wgsim
+nextflow run simulate.nf --outputPath ../pipeline-test/sim-ref --refFile ref/R00000003.fasta
 ```
-
-
-An example of this approach, as a NextFlow workflow can be found in simulate.nf. 
-
-An alternative approach is to map actual sequence reads from sequencing the original reference back to the simulated reference with variants.
 
 
 David Eyre
