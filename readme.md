@@ -97,7 +97,7 @@ nextflow run bug-flow.nf -profile server \
 	--seqlist ../pipeline-test/sim-list.csv \
 	--outputPath ../pipeline-test/bug-flow-output \
 	--refFile ../wgs-eqa/ref/R00000003.fasta \
-	--useSpades 0
+	--runSpades 0
 ```
 
 David Eyre
