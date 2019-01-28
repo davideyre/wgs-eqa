@@ -89,6 +89,16 @@ Following this you can use the script provided to generate a summary of the simu
 bin/collect_simulations.py -p ../pipeline-test/sim-ref/ -o ../pipeline-test/sim-list.csv
 ```
 
+These can then be run using BUGflow (http://github.com/davideyre/bug-flow), like this
+
+```
+cd bug-flow
+nextflow run bug-flow.nf -profile server \
+	--seqlist ../pipeline-test/sim-list.csv \
+	--outputPath ../pipeline-test/bug-flow-output \
+	--refFile ../wgs-eqa/ref/R00000003.fasta \
+	--useSpades 0
+```
 
 David Eyre
 david.eyre@bdi.ox.ac.ul
