@@ -27,5 +27,5 @@ if __name__ == '__main__':
 				id = f.split('.')[0]
 				fq1 = 'r%s.1.fq.gz'%id
 				fq2 = 'r%s.2.fq.gz'%id
-				uuid = str(uuid.uuid4())
-				o.write('%s,%s,%s,%s\n'%(id, uuid, fq1, fq2))
+				guid = str(uuid.uuid4())
+				o.write('%s,%s,%s,%s\n'%(id, guid, fq1, fq2))
