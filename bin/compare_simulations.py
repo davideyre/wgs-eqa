@@ -34,7 +34,7 @@ def compare_sim(refFile, simList, outFile):
 		truth = {}
 		var_count = {'mutation': 0, 'recombination': 0}
 		with open(truthFile, 'r') as o:
-			header = o.readline() #skip the header
+			header = o.readline() #skip the header - chromosome, site, new_site, variant_type, original, new
 			for l in o:
 				l = l.strip().split()
 				if l[4] != l[5]: #ignore same base to same base changes
