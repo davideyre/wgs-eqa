@@ -101,6 +101,7 @@ if __name__ == '__main__':
 	
 	#example call - 
 	# bin/compare_simulations.py -r ref/R00000003.fasta -i ../pipeline-test/sim-compare.csv -o ../pipeline-test/sim_compare_results.txt
+	# bin/compare_simulations.py -r ref/R00000003.fasta -i ../pipeline-test/sim-compare-compass.csv -o ../pipeline-test/sim_compare_compass_results.txt
 
 			
 	
