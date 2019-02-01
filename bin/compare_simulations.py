@@ -26,6 +26,9 @@ def compare_sim(refFile, simList, outFile):
 	#iterate all over simulations
 	for sim in simList:
 		testFile = sim[1]
+		if not os.path.exists(testFile):
+			sys.stdout.write("Missing file: %s, skipping...\n"%testFile)
+			continue
 		test = [s for s in SeqIO.parse(testFile, 'fasta')]
 		
 		#read in the list of true variants
