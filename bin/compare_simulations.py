@@ -65,7 +65,7 @@ def compare_sim(refFile, simList, outFile):
 					if str(site) not in truth[chr.id].keys():
 						#print ('FALSE POSITIVE: %s'%site)
 						fp_count += 1
-						fp_log.append([truthid, os.path.basename(sim[1]), chr.id, site, b_ref, b_test])
+						fp_log.append([truthid, os.path.basename(sim[1]), chr.id, str(site), b_ref, b_test])
 					#check for match
 					else:
 						if b_test == truth[chr.id][str(site)]['variant']:
@@ -87,7 +87,7 @@ def compare_sim(refFile, simList, outFile):
 		outHandle.write(outStr)
 	outHandle.close()
 	for e in fp_log:
-		sys.stdout.write("%s\n"%"".join(e))
+		sys.stdout.write("%s\n"%"\t".join(e))
 
 if __name__ == '__main__':
 	
