@@ -111,12 +111,11 @@ def simulate_ref (ref_file, output_path, mutation_n, subs_from_recomb, recomb_le
 				else:
 					end = site+del_len
 				#set deletion
-				for b in range(site, end):
-					#store deletion
-					var_list.append({'chromosome': chr.id, 'site': b, 'new_site': b+site_offset, 
+				var_list.append({'chromosome': chr.id, 'site': site-1, 'new_site': site+site_offset-1, 
 							'type': 'deletion',
-							'original': seq_data[b], 
-							'variant': '-'})
+							'original': "".join(seq_data[site-1:end]), 
+							'variant': seq_data[site-1]})				
+				for b in range(site, end):
 					site_offset -= 1	
 					seq_data[b] = '-'
 				del_bases += end-site
@@ -125,9 +124,10 @@ def simulate_ref (ref_file, output_path, mutation_n, subs_from_recomb, recomb_le
 				#insertion event
 				insert_len = np.random.geometric(1/insertion_length_mean)
 				insert = "".join(np.random.choice(bases, insert_len, p=bases_p))
-				insert_list.append((site+insert_bases_chr, insert))
+				insert_list.append((site, insert))
+				#store insertion - keep current base and append afterwards, will be stored against current base
 				var_list.append({'chromosome': chr.id, 'site': site, 'new_site': site+site_offset, 
-							'type': 'insertiion', 
+							'type': 'insertion', 
 							'original': seq_data[site], 
 							'variant': seq_data[site] + insert})
 				insert_counter += 1
@@ -188,11 +188,11 @@ def simulate_ref (ref_file, output_path, mutation_n, subs_from_recomb, recomb_le
 	SeqIO.write(new_ref, out_fa, 'fasta')
 	new_ref_len = sum(len(chr) for chr in new_ref)
 	
-	#ouput list of variants
+	#ouput list of variants - numbered from 1
 	with open(output_list_file, 'w') as o:
 		o.write('chromosome\tsite\tnew_site\tvariant_type\toriginal\tnew\n')
 		for v in var_list:
-			o.write('%s\t%s\t%s\t%s\t%s\t%s\n'%(v['chromosome'], v['site'], v['new_site'], 
+			o.write('%s\t%s\t%s\t%s\t%s\t%s\n'%(v['chromosome'], v['site']+1, v['new_site']+1, 
 												v['type'], v['original'], v['variant']))
 	
 	#write json file
@@ -250,4 +250,4 @@ if __name__ == '__main__':
 					 args.deletion_length_mean, args.insertion_n, args.insertion_length_mean)
 	
 	#example call
-	#bin/simulate_reference.py -r ref/R00000003.fa -o example_output -m 500 -s 300 -l 1000 -p 0.04 -d 100 -e 1.5 -i 100 -n 1.5
+	#bin/simulate_reference.py -r ref/R00000003.fasta -o example_output -m 500 -s 300 -l 1000 -p 0.04 -d 100 -e 1.5 -i 100 -n 1.5
