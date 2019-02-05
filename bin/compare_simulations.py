@@ -48,7 +48,7 @@ def compare_sim(refFile, simList, outFile):
 						if l[0] not in truth.keys():
 							truth[l[0]] = {}
 						#convert site back to numbering from zero
-						truth[l[0]][l[1]-1] = {'type': l[3], 'original': l[4], 'variant': l[5], 'found': False}
+						truth[l[0]][str(int(l[1])-1)] = {'type': l[3], 'original': l[4], 'variant': l[5], 'found': False}
 						var_count[l[3]] += 1 #record the total number of variants to find
 		
 		#read in the metadata about the simulation
