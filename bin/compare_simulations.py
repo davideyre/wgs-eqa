@@ -47,7 +47,8 @@ def compare_sim(refFile, simList, outFile):
 					if l[3] in ('mutation', 'recombination'): #don't track inserts and deletions
 						if l[0] not in truth.keys():
 							truth[l[0]] = {}
-						truth[l[0]][l[1]] = {'type': l[3], 'original': l[4], 'variant': l[5], 'found': False}
+						#convert site back to numbering from zero
+						truth[l[0]][l[1]-1] = {'type': l[3], 'original': l[4], 'variant': l[5], 'found': False}
 						var_count[l[3]] += 1 #record the total number of variants to find
 		
 		#read in the metadata about the simulation
@@ -65,7 +66,8 @@ def compare_sim(refFile, simList, outFile):
 					if str(site) not in truth[chr.id].keys():
 						#print ('FALSE POSITIVE: %s'%site)
 						fp_count += 1
-						fp_log.append([truthid, os.path.basename(sim[1]), chr.id, str(site), b_ref, b_test])
+						#log false positives, numbered from 1
+						fp_log.append([truthid, os.path.basename(sim[1]), chr.id, str(site+1), b_ref, b_test])
 					#check for match
 					else:
 						if b_test == truth[chr.id][str(site)]['variant']:
