@@ -78,6 +78,9 @@ def simulate_ref (ref_file, output_path, mutation_n, subs_from_recomb, recomb_le
 		insert_bases_chr = 0
 		site_offset = 0
 		
+		#avoid adjacent insertions and deletions within 10bp - as create ambiguous SNP vs INDEL calls which are actually equivalent
+		last_event = (0, "mutation")
+		
 		#get first site with an event
 		site = np.random.geometric(event_per_site)
 		
@@ -98,42 +101,49 @@ def simulate_ref (ref_file, output_path, mutation_n, subs_from_recomb, recomb_le
 											'variant': new_base})
 				#add mutation to new reference
 				seq_data[site] = new_base
+				last_event = (site, "mutation")
 			
 			elif event_type == "deletion":
-				#a deletion event has occurred
-				del_counter += 1
-				#get number of bases affected
-				del_len = np.random.geometric(1/deletion_length_mean)
-				#check not beyond end of chr
-				if site+del_len > chr_len:
-					#if it is set the end of the recombination tract to the end of the chr
-					end = chr_len
-				else:
-					end = site+del_len
-				#set deletion
-				var_list.append({'chromosome': chr.id, 'site': site-1, 'new_site': site+site_offset-1, 
-							'type': 'deletion',
-							'original': "".join(seq_data[site-1:end]), 
-							'variant': seq_data[site-1]})				
-				for b in range(site, end):
-					site_offset -= 1	
-					seq_data[b] = '-'
-				del_bases += end-site
+				#avoid adjacent insertions and deletions within 10bp
+				if(last_event[0] - site >10 or last_event[1] not in ("insertion", "deletion")):
+					#a deletion event has occurred
+					del_counter += 1
+					#get number of bases affected
+					del_len = np.random.geometric(1/deletion_length_mean)
+					#check not beyond end of chr
+					if site+del_len > chr_len:
+						#if it is set the end of the recombination tract to the end of the chr
+						end = chr_len
+					else:
+						end = site+del_len
+					#set deletion
+					var_list.append({'chromosome': chr.id, 'site': site, 'new_site': site+site_offset, 
+								'type': 'deletion',
+								'original': "".join(seq_data[site:end+1]), 
+								'variant': seq_data[site]})				
+					for b in range(site+1, end+1):
+						site_offset -= 1	
+						seq_data[b] = '-'
+					del_bases += end-site
+					last_event = (site, "deletion")
 			
 			elif event_type == "insertion":
-				#insertion event
-				insert_len = np.random.geometric(1/insertion_length_mean)
-				insert = "".join(np.random.choice(bases, insert_len, p=bases_p))
-				insert_list.append((site, insert))
-				#store insertion - keep current base and append afterwards, will be stored against current base
-				var_list.append({'chromosome': chr.id, 'site': site, 'new_site': site+site_offset, 
-							'type': 'insertion', 
-							'original': seq_data[site], 
-							'variant': seq_data[site] + insert})
-				insert_counter += 1
-
-				insert_bases_chr += insert_len
-				site_offset += insert_len
+				#avoid adjacent insertions and deletions within 10bp
+				if(last_event[0] - site >10 or last_event[1] not in ("insertion", "deletion")):
+					#insertion event
+					insert_len = np.random.geometric(1/insertion_length_mean)
+					insert = "".join(np.random.choice(bases, insert_len, p=bases_p))
+					insert_list.append((site, insert))
+					#store insertion - keep current base and append afterwards, will be stored against current base
+					var_list.append({'chromosome': chr.id, 'site': site, 'new_site': site+site_offset, 
+								'type': 'insertion', 
+								'original': seq_data[site], 
+								'variant': seq_data[site] + insert})
+					insert_counter += 1
+	
+					insert_bases_chr += insert_len
+					site_offset += insert_len
+					last_event = (site, "insertion")
 				
 			else:
 				#recombination has occurred
@@ -158,6 +168,7 @@ def simulate_ref (ref_file, output_path, mutation_n, subs_from_recomb, recomb_le
 							'variant': new_base})
 						seq_data[b] = new_base
 						recomb_subs += 1
+				last_event = (site, "recombination")
 			
 			#simulate number of sites to next event
 			site = site + np.random.geometric(event_per_site)
